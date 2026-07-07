@@ -37,7 +37,7 @@ async def cmd_start(message: Message, state: FSMContext):
             # Новый пользователь - покажем меню языков
             text = get_text("ru", "welcome")  # По умолчанию русский
     
-    await message.answer(text, reply_markup=get_language_keyboard())
+    await message.answer(text, reply_markup=get_language_keyboard(), parse_mode="HTML")
     await state.set_state(TestStates.waiting_for_language)
 
 
