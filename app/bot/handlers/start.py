@@ -13,6 +13,7 @@ from app.bot.keyboards.keyboards import (
     get_test_keyboard,
     get_feedback_keyboard,
     get_share_result_keyboard,
+    get_context_keyboard,
     get_main_menu_keyboard
 )
 from app.core.translations import get_text
@@ -180,7 +181,9 @@ async def complete_test(message: Message, state: FSMContext):
     
     # Расчитываем баллы
     scores = ScoringService.calculate_scores(answers)
-    primary, secondary = ScoringService.determine_primary_secondary(scores)
+    profile_info = ScoringService.get_profile_key(scores)
+    primary = profile_info["primary_style"]
+    secondary = profile_info["secondary_style"]
     
     # Сохраняем результат в БД
     async with async_session_maker() as session:
@@ -206,16 +209,13 @@ async def complete_test(message: Message, state: FSMContext):
         await ResultService.update_result(session, result.id, card_path=card_path)
     
     # Отправляем текстовый результат
-    profile = ScoringService.get_profile_description(language, primary)
-    text = f"✨ {get_text(language, 'results_title')}\n"
-    text += f"<b>{profile.get('name', primary)}</b>\n\n"
-    text += f"🔵 Blue: {scores['blue']}/100\n"
-    text += f"🟢 Green: {scores['green']}/100\n"
-    text += f"🟡 Yellow: {scores['yellow']}/100\n"
-    text += f"🔴 Red: {scores['red']}/100\n\n"
-    text += profile.get('description', '')
-    
+    text = ScoringService.generate_result(scores)
     await message.answer(text, parse_mode="HTML")
+
+    await message.answer(
+        "Выберите контекст, и я покажу, как этот профиль проявляется в конкретной ситуации:",
+        reply_markup=get_context_keyboard(language)
+    )
     
     # Кнопка поделиться результатом
     share_text = get_text(language, "share_results", name=name)
@@ -225,13 +225,39 @@ async def complete_test(message: Message, state: FSMContext):
     )
     
     # Сохраняем ID результата в состояние
-    await state.update_data(result_id=result.id, card_path=card_path, scores=scores, 
-                           primary_color=primary, secondary_color=secondary)
+    await state.update_data(
+        result_id=result.id,
+        card_path=card_path,
+        scores=scores,
+        primary_color=primary,
+        secondary_color=secondary,
+        profile_key=profile_info["profile_key"],
+        profile_type=profile_info["profile_type"],
+        lowest_style=profile_info["lowest_style"],
+    )
     
     await state.set_state(TestStates.viewing_results)
 
 
 # Обработчики кнопок после результатов
+@router.callback_query(TestStates.viewing_results, F.data.startswith("context_"))
+async def show_context_result(query: CallbackQuery, state: FSMContext):
+    """Показать результат в выбранном рабочем контексте."""
+    from app.core.scoring import ScoringService
+
+    data = await state.get_data()
+    scores = data.get("scores")
+
+    if not scores:
+        await query.answer("Результат не найден. Пройдите тест заново.", show_alert=True)
+        return
+
+    context = query.data.replace("context_", "", 1)
+    text = ScoringService.generate_context_result(scores, context)
+    await query.message.answer(text, parse_mode="HTML")
+    await query.answer()
+
+
 @router.callback_query(TestStates.viewing_results, F.data == "share_result")
 async def share_result(query: CallbackQuery, state: FSMContext):
     """Поделиться результатом с другом"""
