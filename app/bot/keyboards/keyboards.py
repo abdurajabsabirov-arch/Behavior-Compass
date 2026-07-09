@@ -82,11 +82,20 @@ def get_share_result_keyboard():
 def get_context_keyboard(language="ru"):
     """Кнопки для раскрытия результата в рабочих контекстах."""
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="💼 В продажах и переговорах", callback_data="context_sales")],
-        [InlineKeyboardButton(text="👥 В управлении людьми", callback_data="context_management")],
-        [InlineKeyboardButton(text="🤝 В командной работе", callback_data="context_team")],
-        [InlineKeyboardButton(text="💬 В коммуникации", callback_data="context_communication")],
-        [InlineKeyboardButton(text="⚠️ В стрессе", callback_data="context_stress")],
+        [InlineKeyboardButton(text="📌 Подробнее о моём стиле", callback_data="context_detailed")],
+        [
+            InlineKeyboardButton(text="💪 Сильные стороны", callback_data="context_strengths"),
+            InlineKeyboardButton(text="⚠️ Риски", callback_data="context_risks"),
+        ],
+        [InlineKeyboardButton(text="💬 Как со мной общаться", callback_data="context_communication")],
+        [
+            InlineKeyboardButton(text="💼 Я в продажах", callback_data="context_sales"),
+            InlineKeyboardButton(text="🤝 Я в переговорах", callback_data="context_negotiations"),
+        ],
+        [
+            InlineKeyboardButton(text="👥 Я в команде", callback_data="context_team"),
+            InlineKeyboardButton(text="🔥 В стрессе", callback_data="context_stress"),
+        ],
         [InlineKeyboardButton(text="🚀 Совет по развитию", callback_data="context_advice")],
     ])
 

@@ -213,15 +213,8 @@ async def complete_test(message: Message, state: FSMContext):
     await message.answer(text, parse_mode="HTML")
 
     await message.answer(
-        "Выберите контекст, и я покажу, как этот профиль проявляется в конкретной ситуации:",
+        "Откройте нужный блок разбора:",
         reply_markup=get_context_keyboard(language)
-    )
-    
-    # Кнопка поделиться результатом
-    share_text = get_text(language, "share_results", name=name)
-    await message.answer(
-        share_text,
-        reply_markup=get_share_result_keyboard()
     )
     
     # Сохраняем ID результата в состояние
