@@ -213,7 +213,7 @@ async def complete_test(message: Message, state: FSMContext):
     await message.answer(text, parse_mode="HTML")
 
     await message.answer(
-        "Откройте нужный блок разбора:",
+        "Выберите контекст, и я покажу, как этот профиль может проявляться в рабочей ситуации:",
         reply_markup=get_context_keyboard(language)
     )
     
@@ -233,6 +233,7 @@ async def complete_test(message: Message, state: FSMContext):
 
 
 # Обработчики кнопок после результатов
+@router.callback_query(TestStates.viewing_results, F.data.startswith("context:"))
 @router.callback_query(TestStates.viewing_results, F.data.startswith("context_"))
 async def show_context_result(query: CallbackQuery, state: FSMContext):
     """Показать результат в выбранном рабочем контексте."""
@@ -245,7 +246,7 @@ async def show_context_result(query: CallbackQuery, state: FSMContext):
         await query.answer("Результат не найден. Пройдите тест заново.", show_alert=True)
         return
 
-    context = query.data.replace("context_", "", 1)
+    context = query.data.split(":", 1)[1] if ":" in query.data else query.data.replace("context_", "", 1)
     text = ScoringService.generate_context_result(scores, context)
     await query.message.answer(text, parse_mode="HTML")
     await query.answer()
